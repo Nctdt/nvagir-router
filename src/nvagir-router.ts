@@ -1,3 +1,5 @@
+import { PageComponent } from 'nvagir'
+
 type Methods = ReturnType<typeof createBrowserHistory>
 
 function bindPopEvent(fn: (ev: WindowEventMap['popstate']) => void) {
@@ -12,7 +14,6 @@ function bindRender(methods: Methods, render: () => void) {
       methodName,
     )!
     const oldMethod = propertyDescriptor.value!
-    console.log(propertyDescriptor)
     Reflect.set(methods, methodName, (...args: any) => {
       oldMethod(...args)
       render()
@@ -26,7 +27,7 @@ declare global {
   }
 }
 
-function createBrowserHistory<T extends Record<string, () => HTMLElement>>(
+function createBrowserHistory<T extends Record<string, PageComponent>>(
   root: HTMLElement,
   router: T,
 ) {
@@ -55,7 +56,7 @@ function createBrowserHistory<T extends Record<string, () => HTMLElement>>(
     }
 
     const component = router[pathname]()
-    root.append(component)
+    root.append(component.el.dom)
   }
   const push: PathMethod = path => {
     history.pushState(null, '', path)
