@@ -1,12 +1,20 @@
 import { PageComponent } from 'nvagir'
 
+import { PathListener } from './PathListener'
+
+/** path subscribe */
+export const pathListener = new PathListener()
+
 type Methods = ReturnType<typeof createBrowserHistory>
 
+/** bind window popstate event */
 function bindPopEvent(fn: (ev: WindowEventMap['popstate']) => void) {
   window.addEventListener('popstate', ev => {
     fn(ev)
   })
 }
+
+/** bind methods when call, after call render */
 function bindRender(methods: Methods, render: () => void) {
   for (let methodName in methods) {
     const propertyDescriptor = Reflect.getOwnPropertyDescriptor(
@@ -27,7 +35,12 @@ declare global {
   }
 }
 
-function createBrowserHistory<T extends Record<string, PageComponent>>(
+/**
+ * create router and inject History of nvagirRouter prop
+ * @param root DOM element render place
+ * @param router path map component
+ */
+export function createBrowserHistory<T extends Record<string, PageComponent>>(
   root: HTMLElement,
   router: T,
 ) {
@@ -46,6 +59,7 @@ function createBrowserHistory<T extends Record<string, PageComponent>>(
   const render = (): void => {
     const { pathname } = location
     const to = replaceMap[pathname]
+    pathListener.emit(pathname)
     if (to) {
       allMethod.replace(to)
       return
@@ -58,6 +72,7 @@ function createBrowserHistory<T extends Record<string, PageComponent>>(
     const component = router[pathname]()
     root.append(component.el.dom)
   }
+
   const push: PathMethod = path => {
     history.pushState(null, '', path)
   }
@@ -88,4 +103,4 @@ function createBrowserHistory<T extends Record<string, PageComponent>>(
   return allMethod
 }
 
-export default createBrowserHistory
+export default { createBrowserHistory, pathListener }
